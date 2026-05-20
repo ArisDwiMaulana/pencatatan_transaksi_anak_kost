@@ -1,14 +1,16 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
 
-//================================== Const Var Region
+//================================== Var Region
 const int total_data = 100;
 
 //================================== Struct Region
 struct Transaksi{
     int id;
-    int jenis;           
+    int jenis;    // 1 untuk pemasukan, 2 untuk pengeluaran       
     string deskripsi;
     double nominal;
     int tanggal[3];     
@@ -157,6 +159,64 @@ void sub_menu_4(){
         }
     }while(sub_pilihan != 4);
 }
+
+void id_terakhir(int *id_terakhir){
+    ifstream file("src/data.csv");
+    if(file.fail()){
+        cout<<"Gagal membuka file!"<<endl;
+        return;
+    }
+    string baris, barisTerakhir;
+    *id_terakhir = 0;
+    while (getline(file, baris)) {
+        if (!baris.empty()) {
+            barisTerakhir = baris; // Selalu perbarui dengan baris terbaru
+        }
+    }
+    file.close();
+    *id_terakhir = stoi(barisTerakhir.substr(0, barisTerakhir.find(",")));
+}
+
+void catat_transaksi_baru(){
+    int total_transaksi = 0;
+    id_terakhir(&total_transaksi);
+    if(total_transaksi == 100){
+        cout<<"Jumlah transaksi sudah mencapai batas maksimum (100)."<<endl;
+        return;
+    }else{
+        ofstream file("src/data.csv", ios::app);
+        if(file.fail()){
+            cout<<"Gagal membuka file!"<<endl;
+            return;
+        }
+        Transaksi temp;
+        temp.id = total_transaksi + 1;
+        cout<<"Masukkan Jenis Transaksi (1 untuk Pemasukan, 2 untuk Pengeluaran): ";
+        cin>>temp.jenis;
+        cin.ignore();
+        cout<<"Masukkan Deskripsi: ";
+        getline(cin, temp.deskripsi);
+        cout<<"Masukkan Nominal: ";
+        cin>>temp.nominal;
+        for(int i=0; i<3; i++){
+            if(i == 0){
+                cout<<"Masukkan Tahun (YYYY): ";
+                cin>>temp.tanggal[i];
+            }
+            else if(i == 1){
+                cout<<"Masukkan Bulan (MM): ";
+                cin>>temp.tanggal[i];
+            }
+            else{
+                cout<<"Masukkan Tanggal (DD): ";
+                cin>>temp.tanggal[i];
+            }
+        }
+        file<<temp.id<<","<<temp.jenis<<","<<temp.deskripsi<<","<<temp.nominal<<","<<temp.tanggal[0]<<","<<temp.tanggal[1]<<","<<temp.tanggal[2]<<endl;
+        file.close();
+    }
+    
+}
 //================================== main Region
 int main() {
     int pilihan;
@@ -175,7 +235,7 @@ int main() {
                 break;
             case 2:
                 system("cls");
-                cout<<"Mencatat Transaksi Baru..."<<endl;
+                catat_transaksi_baru();
                 system("pause");
                 break;
             case 3:
