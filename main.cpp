@@ -280,8 +280,7 @@ void edit_transaksi(){
     int id_transaksi;
     cout<<"Masukkan ID Transaksi yang ingin diedit: ";
     cin>>id_transaksi;
-    bool found = cari_id_transaksi(id_transaksi);
-    
+    bool found = cari_id_transaksi(id_transaksi); 
     if (!found) {
         cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
     }else{
@@ -319,6 +318,34 @@ void edit_transaksi(){
                 }
             }
             file<<temp[i].id<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
+        }
+        file.close();
+    }
+}
+
+void hapus_transaksi(){
+    int id_transaksi;
+    cout<<"Masukkan ID Transaksi yang ingin dihapus: ";
+    cin>>id_transaksi;
+    bool found = cari_id_transaksi(id_transaksi);
+    if (!found) {
+        cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
+    } else {
+        Transaksi temp[100];
+        int data_terisi;
+        load_data(temp, &data_terisi);
+        ofstream file("src/data.csv");
+        if(file.fail()){
+            cout<<"Gagal membuka file!"<<endl;
+            return;
+        }
+        int jumlah_dihapus = 0;
+        for(int i=0; i<data_terisi; i++){
+            if(temp[i].id != id_transaksi){
+                file<<temp[i].id - jumlah_dihapus<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
+            }else{
+                jumlah_dihapus++;
+            }
         }
         file.close();
     }
@@ -363,6 +390,7 @@ int main() {
             case 6:
                 system("cls");
                 cout<<"Menghapus Transaksi..."<<endl;
+                hapus_transaksi();
                 system("pause");
                 break;
             case 7:
