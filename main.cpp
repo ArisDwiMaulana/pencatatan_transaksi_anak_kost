@@ -217,6 +217,112 @@ void catat_transaksi_baru(){
     }
     
 }
+
+void load_data(Transaksi temp[], int *data_terisi){
+    ifstream file("src/data.csv");
+    if(file.fail()){
+        cout<<"Gagal membuka file!"<<endl;
+        return;
+    }
+    string baris;
+    int index = 0;
+    while (getline(file, baris) && index < total_data) {
+        if (!baris.empty()) {
+            stringstream ss(baris);
+            string id_str, jenis_str, deskripsi_str, nominal_str, tahun_str, bulan_str, tanggal_str;
+            getline(ss, id_str, ',');
+            getline(ss, jenis_str, ',');
+            getline(ss, deskripsi_str, ',');
+            getline(ss, nominal_str, ',');
+            getline(ss, tahun_str, ',');
+            getline(ss, bulan_str, ',');
+            getline(ss, tanggal_str);
+            
+            temp[index].id = stoi(id_str);
+            temp[index].jenis = stoi(jenis_str);
+            temp[index].deskripsi = deskripsi_str;
+            temp[index].nominal = stod(nominal_str);
+            temp[index].tanggal[0] = stoi(tahun_str);
+            temp[index].tanggal[1] = stoi(bulan_str);
+            temp[index].tanggal[2] = stoi(tanggal_str);
+            
+            index++;
+        }
+    }
+    *data_terisi = index;
+    file.close();
+}
+
+bool cari_id_transaksi(int id_transaksi){
+    ifstream file("src/data.csv");
+    if(file.fail()){
+        cout<<"Gagal membuka file!"<<endl;
+        return false;
+    }
+    string baris;
+    while (getline(file, baris)) {
+        if (!baris.empty()) {
+            stringstream ss(baris);
+            string id_str;
+            getline(ss, id_str, ',');
+            int id = stoi(id_str);
+            if (id == id_transaksi) {
+                file.close();
+                return true;
+            }
+        }
+    }
+    file.close();
+    return false;
+}   
+
+void edit_transaksi(){
+    int id_transaksi;
+    cout<<"Masukkan ID Transaksi yang ingin diedit: ";
+    cin>>id_transaksi;
+    bool found = cari_id_transaksi(id_transaksi);
+    
+    if (!found) {
+        cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
+    }else{
+        Transaksi temp[100];
+        int data_terisi;
+        load_data(temp, &data_terisi);
+        ofstream file("src/data.csv");
+        if(file.fail()){
+            cout<<"Gagal membuka file!"<<endl;
+            return;
+        }
+        for(int i=0; i<data_terisi; i++){
+            if(temp[i].id == id_transaksi){
+                cout<<"Transaksi ditemukan. Silakan masukkan data baru."<<endl;
+                cout<<"Masukkan Jenis Transaksi (1 untuk Pemasukan, 2 untuk Pengeluaran): ";
+                cin>>temp[i].jenis;
+                cin.ignore();
+                cout<<"Masukkan Deskripsi: ";
+                getline(cin, temp[i].deskripsi);
+                cout<<"Masukkan Nominal: ";
+                cin>>temp[i].nominal;
+                for(int j=0; j<3; j++){
+                    if(j == 0){
+                        cout<<"Masukkan Tahun (YYYY): ";
+                        cin>>temp[i].tanggal[j];
+                    }
+                    else if(j == 1){
+                        cout<<"Masukkan Bulan (MM): ";
+                        cin>>temp[i].tanggal[j];
+                    }
+                    else{
+                        cout<<"Masukkan Tanggal (DD): ";
+                        cin>>temp[i].tanggal[j];
+                    }
+                }
+            }
+            file<<temp[i].id<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
+        }
+        file.close();
+    }
+}
 //================================== main Region
 int main() {
     int pilihan;
@@ -251,6 +357,7 @@ int main() {
             case 5:
                 system("cls");
                 cout<<"Mengedit Transaksi..."<<endl;
+                edit_transaksi();
                 system("pause");
                 break;
             case 6:
