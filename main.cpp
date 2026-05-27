@@ -72,22 +72,17 @@ string _left(const string& str, int width) {
 
 void to_table(Transaksi data[], int &total){
     string sep = _generate_separator();
-
     cout << sep << endl;
-
     cout << "|";
     for (int i = 0; i < total_column; i++) {
         cout << " " << _center(metadata[i], space_data[i]) << " |";
     }
     cout << endl;
-
     cout << sep << endl;
-
     for (int i = 0; i < total; i++) {
         cout << "|";
         for (int j = 0; j < total_column; j++) {
             string val = "";
-        
             switch (j) {
                 case 0: val = to_string(data[i].id); break;
                 case 1: val = (data[i].jenis == 1) ? "Pemasukan" : "Pengeluaran"; break;
@@ -95,12 +90,10 @@ void to_table(Transaksi data[], int &total){
                 case 3: val = to_string(data[i].nominal); break;
                 case 4: val = to_date_view(data[i]); break;
             }
-            
             cout << " " << _left(val, space_data[j]) << " |";
         }
         cout << endl;
     }
-
     cout << sep << endl;
 }
 
@@ -112,14 +105,16 @@ void id_terakhir(int *id_terakhir){
         return;
     }
     string baris, barisTerakhir;
-    *id_terakhir = 0;
     while (getline(file, baris)) {
         if (!baris.empty()) {
-            barisTerakhir = baris; // Selalu perbarui dengan baris terbaru
+            barisTerakhir = baris; // Selalu perbarui dengan baris paling akhir
         }
     }
     file.close();
-    *id_terakhir = stoi(barisTerakhir.substr(0, barisTerakhir.find(",")));
+    stringstream ss(barisTerakhir);
+    getline(ss, barisTerakhir, ',');
+    *id_terakhir = stoi(barisTerakhir); 
+
 }
 
 void catat_transaksi_baru(){
@@ -157,6 +152,7 @@ void catat_transaksi_baru(){
                 cin>>temp.tanggal[i];
             }
         }
+        cin.ignore();
         file<<temp.id<<","<<temp.jenis<<","<<temp.deskripsi<<","<<temp.nominal<<","<<temp.tanggal[0]<<","<<temp.tanggal[1]<<","<<temp.tanggal[2]<<endl;
         file.close();
     }
@@ -262,6 +258,7 @@ void edit_transaksi(){
                     }
                 }
             }
+            cin.ignore();
             file<<temp[i].id<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
         }
         file.close();
@@ -292,6 +289,7 @@ void hapus_transaksi(){
                 jumlah_dihapus++;
             }
         }
+        cin.ignore();
         file.close();
     }
 }
