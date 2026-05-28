@@ -611,6 +611,8 @@ void sub_menu_3(){
 }
 
 //================================== Sub Menu 4 Region
+
+
 void filter_laporan(int pilihan){
     int total_temp = 0;
     Transaksi temp[total_data]; 
@@ -623,7 +625,6 @@ void filter_laporan(int pilihan){
 
     int total_check_list = 0;
     int check_list[total_data];
-    int last_list = -1; 
 
     if (pilihan == 3) {
         check_list[0] = 999999;
@@ -636,9 +637,15 @@ void filter_laporan(int pilihan){
                 nilai_sekarang += temp[i].tanggal[1];
             }
 
-            if (nilai_sekarang != last_list && total_check_list < total_data) {
+            bool is_pass = true;
+            for (int i=0; i<total_check_list; i++){
+                if (check_list[i] == nilai_sekarang){
+                    is_pass = false;
+                }
+            }
+
+            if (is_pass && total_check_list < total_data) {
                 check_list[total_check_list] = nilai_sekarang;
-                last_list = nilai_sekarang;
                 total_check_list++;
                 table_data.total_row += 1;
             }
