@@ -5,11 +5,6 @@ using namespace std;
 
 //================================== Config Region
 const int total_data = 100;
-const int total_column = 5;
-const string metadata[total_column] = {
-    "id", "jenis", "deskripsi", "nominal", "tanggal"
-};
-const int space_data[total_column] = {3, 12, 30, 10, 14};
 
 const string month[] = {
     "Januari", "Februari", "Maret", "April", 
@@ -26,6 +21,25 @@ struct Transaksi{
     int tanggal[3];     
 };
 
+struct Laporan{
+    int pemasukkan;
+    int pengeluaran;
+    int tanggal[3];
+
+    int get_sisa() const{
+        return pemasukkan - pengeluaran;
+    };
+};
+
+struct TableSchema{
+    int total_row;
+    int total_column;
+    int space[10];
+    string metadata[10];
+    Transaksi records[total_data];
+    Laporan laporan_records[total_data];
+};
+
 //================================== Utils Region
 int check_menu(string pilihan){
     if (pilihan.empty() || pilihan.length() > 1){
@@ -39,20 +53,34 @@ int check_menu(string pilihan){
     return -1;
 }
 
-string to_date_view(Transaksi data){
-    string date_str = "";
+string to_date_view(const int tanggal[]) {
+    int raw_tgl = tanggal[2];
+    int raw_bln = tanggal[1] - 1;
+    int raw_thn = tanggal[0];
+
+    string res = "";
+
+    if (raw_tgl != 0) {
+        res += to_string(raw_tgl);
+    }
     
-    date_str += to_string(data.tanggal[2]) + " ";   
-    date_str += month[data.tanggal[1]] + " ";       
-    date_str += to_string(data.tanggal[0]);
-    
-    return date_str;
+    if (raw_bln != -1) {
+        if (!res.empty()) res += " "; 
+        res += month[raw_bln];
+    }
+
+    if (raw_thn != 0) {
+        if (!res.empty()) res += " "; 
+        res += to_string(raw_thn);
+    }
+
+    return res.empty() ? "-" : res;
 }
 
-string _generate_separator(){
+string _generate_separator(const TableSchema &data){
     string result = "+";
-    for (int val : space_data) {
-        result += string(val + 2, '-') + "+";
+    for (int i=0; i<data.total_column; i++){
+        result += string(data.space[i] + 2, '-') + "+";
     }
     return result;
 }
@@ -70,27 +98,40 @@ string _left(const string& str, int width) {
     return str + string(width - str.length(), ' ');
 }
 
-void to_table(Transaksi data[], int &total){
-    string sep = _generate_separator();
+string to_record_value(int col_idx, int row_idx, const TableSchema &data, const string &option){
+    if (option == "riwayat"){
+        switch (col_idx) {
+            case 0: return to_string(data.records[row_idx].id);
+            case 1: return (data.records[row_idx].jenis == 1) ? "Pemasukan" : "Pengeluaran";
+            case 2: return data.records[row_idx].deskripsi;
+            case 3: return "Rp " + to_string(data.records[row_idx].nominal);
+            case 4: return to_date_view(data.records[row_idx].tanggal);
+        }
+    } else if (option == "laporan"){
+        switch (col_idx) {
+            case 0: return to_date_view(data.laporan_records[row_idx].tanggal);
+            case 1: return "Rp " + to_string(data.laporan_records[row_idx].pemasukkan);
+            case 2: return "Rp " + to_string(data.laporan_records[row_idx].pengeluaran);
+            case 3: return "Rp " + to_string(data.laporan_records[row_idx].get_sisa());
+        }
+    }
+    return "";
+}
+
+void to_table(const TableSchema &data, const string &option){
+    string sep = _generate_separator(data);
     cout << sep << endl;
     cout << "|";
-    for (int i = 0; i < total_column; i++) {
-        cout << " " << _center(metadata[i], space_data[i]) << " |";
+    for (int i = 0; i < data.total_column; i++) {
+        cout << " " << _center(data.metadata[i], data.space[i]) << " |";
     }
     cout << endl;
     cout << sep << endl;
-    for (int i = 0; i < total; i++) {
+    for (int i = 0; i < data.total_row; i++) {
         cout << "|";
-        for (int j = 0; j < total_column; j++) {
-            string val = "";
-            switch (j) {
-                case 0: val = to_string(data[i].id); break;
-                case 1: val = (data[i].jenis == 1) ? "Pemasukan" : "Pengeluaran"; break;
-                case 2: val = data[i].deskripsi; break;
-                case 3: val = to_string(data[i].nominal); break;
-                case 4: val = to_date_view(data[i]); break;
-            }
-            cout << " " << _left(val, space_data[j]) << " |";
+        for (int j = 0; j < data.total_column; j++) {
+            string val = to_record_value(j, i, data, option);
+            cout << " " << _left(val, data.space[j]) << " |";
         }
         cout << endl;
     }
@@ -323,55 +364,79 @@ bool is_sorted(){
     return false;
 }
 
-void sort_record(Transaksi data[], int size){
-    int minIndex = -1;
+int select_sort_type(){
+    string pilihan;
+    cout<<"[1] Descend / [2] Ascend : ";
+    getline(cin, pilihan);
 
-    for (int i = 0; i < size; i++){
-        minIndex = i;
-        for (int j = i + 1; j < size; j++){
-            if (data[minIndex].tanggal > data[j].tanggal){
-                minIndex = j;
+    if (pilihan[0] == '1'){
+        return 1;
+    }
+    return 2;
+}
+
+int bandingkan_tanggal(int t1[3], int t2[3]) {
+    for (int i = 0; i < 3; i++) {
+        if (t1[i] > t2[i]) return 1;
+        if (t1[i] < t2[i]) return -1;
+    }
+    return 0;
+}
+
+void sort_record(TableSchema &data, int sort_type){
+    for (int i = 0; i < data.total_row; i++){
+        int targetIndex = i;
+        
+        for (int j = i + 1; j < data.total_row; j++){
+            int hasil = bandingkan_tanggal(
+                data.records[j].tanggal, 
+                data.records[targetIndex].tanggal
+            );
+
+            if (sort_type == 1) {
+                if (hasil > 0) targetIndex = j;
+            } else if (sort_type == 2) {
+                if (hasil < 0) targetIndex = j;
             }
         }
 
-        if (minIndex != i) {
-            Transaksi temp = data[i];
-            data[i] = data[minIndex];
-            data[minIndex] = temp;
+        if (targetIndex != i) {
+            Transaksi temp = data.records[i];
+            data.records[i] = data.records[targetIndex];
+            data.records[targetIndex] = temp;
         }
     }
 }
 
-void filter_pilihan(const int pilihan, bool sorted){
+void filter_pilihan(int pilihan, bool sorted, int sort_type){
     int total_temp = 0;
 
     Transaksi temp[total_data]; 
     load_data(temp, &total_temp);
 
-    if (pilihan == 0 && !sorted) {
-        to_table(temp, total_temp);
-        return;
-    }
-
-    int total_result = 0;
-    Transaksi result[total_data];
+    TableSchema table_data = {
+        0,
+        5,
+        {3, 12, 35, 13, 14},
+        {"id", "jenis", "deskripsi", "nominal", "tanggal"}
+    };
 
     for (int i = 0; i < total_temp; i++) {
         if (pilihan == 0 || temp[i].jenis == pilihan) {
-            result[total_result] = temp[i];
-            total_result++;
+            table_data.records[table_data.total_row] = temp[i];
+            table_data.total_row++;
         }
     }
 
     if (sorted) {
-        sort_record(result, total_result);
+        sort_record(table_data, sort_type);
     }
     
-    to_table(result, total_result);
+    to_table(table_data, "riwayat");
 }
 
 void sub_menu_1(){
-    int pilihan;
+    int pilihan, sort_type = 1;
     bool sorted;
     do{
         system("cls");
@@ -380,22 +445,26 @@ void sub_menu_1(){
 
         if (pilihan >= 1 && pilihan <= 3){
             sorted = is_sorted();
-            if (sorted){cout<<"(Terurut)..."<<endl;}
-            else{cout<<"(Tidak Terurut)..."<<endl;}
+            if (sorted){
+                sort_type = select_sort_type();
+                cout<<"(Terurut)..."<<endl;
+            } else{
+                cout<<"(Tidak Terurut)..."<<endl;
+            }
         }
 
         system("cls");
         switch(pilihan){
             case 1:
-                filter_pilihan(0, sorted);
+                filter_pilihan(0, sorted, sort_type);
                 break;
             case 2:
                 cout<<"Menampilkan Pemasukan..."<<endl;
-                filter_pilihan(1, sorted);
+                filter_pilihan(1, sorted, sort_type);
                 break;
             case 3:
                 cout<<"Menampilkan Pengeluaran..."<<endl;
-                filter_pilihan(2, sorted);
+                filter_pilihan(2, sorted, sort_type);
                 break;
             case 4:
                 cout<<"Kembali ke Menu Utama..."<<endl;
@@ -443,8 +512,12 @@ void filter_search(int &h, int &b, int &t, int &n){
     Transaksi temp[total_data];
     load_data(temp, &total_temp);
 
-    int total_result = 0;
-    Transaksi result[total_data];
+    TableSchema table_data = {
+        0,
+        5,
+        {3, 12, 35, 13, 14},
+        {"id", "jenis", "deskripsi", "nominal", "tanggal"}
+    };
 
     for (int i=0; i < total_temp; i++){
         bool filter = true;
@@ -466,12 +539,12 @@ void filter_search(int &h, int &b, int &t, int &n){
         }
 
         if (filter){
-            result[total_result] = temp[i];
-            total_result += 1;
+            table_data.records[table_data.total_row] = temp[i];
+            table_data.total_row += 1;
         }
     }
 
-    to_table(result, total_result);
+    to_table(table_data, "riwayat");
 }
 
 void sub_menu_3(){
@@ -528,33 +601,72 @@ void sub_menu_3(){
 }
 
 //================================== Sub Menu 4 Region
-void tampilkan_laporan(int pemasukan, int pengeluaran, int sisa){
-    cout << "============================" << endl
-         << "Pemasukan   : " << pemasukan << endl
-         << "Pengeluaran : " << pengeluaran << endl
-         << "Sisa Saldo  : " << sisa << endl
-         << "============================" << endl;
-}
-
-void filter_laporan(int pilihan, int b, int t){
-    int total_temp = 0, pemasukan = 0, pengeluaran = 0;
+void filter_laporan(int pilihan){
+    int total_temp = 0;
     Transaksi temp[total_data]; 
     load_data(temp, &total_temp);
 
-    for (int i = 0; i < total_temp; i++) {
-        if (pilihan != 3) {
-            if (t != -1 && temp[i].tanggal[0] != t) continue;
-            if (b != -1 && temp[i].tanggal[1] != b) continue;
-        }
+    TableSchema table_data = {
+        0, 4, {14, 13, 13, 13},
+        {"tanggal", "pemasukkan", "pengeluaran", "sisa"}
+    };
 
-        if (temp[i].jenis == 1) {
-            pemasukan += temp[i].nominal;
-        } else {
-            pengeluaran += temp[i].nominal;
+    int total_check_list = 0;
+    int check_list[total_data];
+    int last_list = -1; 
+
+    if (pilihan == 3) {
+        check_list[0] = 999999;
+        total_check_list = 1;
+        table_data.total_row = 1;
+    } else {
+        for (int i = 0; i < total_temp; i++) {
+            int nilai_sekarang = temp[i].tanggal[0] * 100;
+            if (pilihan == 1) {
+                nilai_sekarang += temp[i].tanggal[1];
+            }
+
+            if (nilai_sekarang != last_list && total_check_list < total_data) {
+                check_list[total_check_list] = nilai_sekarang;
+                last_list = nilai_sekarang;
+                total_check_list++;
+                table_data.total_row += 1;
+            }
         }
     }
 
-    tampilkan_laporan(pemasukan, pengeluaran, pemasukan - pengeluaran);
+    Laporan *target;
+    for (int g = 0; g < total_check_list; g++) {
+        target = &table_data.laporan_records[g];
+        target->pemasukkan = 0;
+        target->pengeluaran = 0;
+
+        for (int i = 0; i < total_temp; i++) {
+            int tanggal_temp = temp[i].tanggal[0] * 100;
+            if (pilihan == 1) {
+                tanggal_temp += temp[i].tanggal[1];
+            }
+
+            if (pilihan == 3 || tanggal_temp == check_list[g]) {
+                
+                if (pilihan != 3) {
+                    target->tanggal[0] = tanggal_temp / 100;
+                    target->tanggal[1] = tanggal_temp % 100;
+                } else {
+                    target->tanggal[0] = 0;
+                    target->tanggal[1] = 0;
+                }
+
+                if (temp[i].jenis == 1) {
+                    target->pemasukkan += temp[i].nominal;
+                } else {
+                    target->pengeluaran += temp[i].nominal;
+                }
+            }
+        }
+    }
+
+    to_table(table_data, "laporan");
 }
 
 int list_sub_menu_4(){
@@ -579,20 +691,16 @@ void sub_menu_4(){
         system("cls");
         pilihan = list_sub_menu_4();
 
-        int bulan = -1, tahun = -1;
         bool proses_filter = false;
 
         system("cls");
         switch(pilihan){
             case 1:
                 cout<<"Menampilkan Laporan Bulanan..."<<endl;
-                bulan = input_search("bulan");
-                tahun = input_search("tahun");
                 proses_filter = true;
                 break;
             case 2:
                 cout<<"Menampilkan Laporan Tahunan..."<<endl;
-                tahun = input_search("tahun");
                 proses_filter = true;
                 break;
             case 3:
@@ -606,7 +714,7 @@ void sub_menu_4(){
                 cout<<"Pilihan tidak valid. Silakan coba lagi."<<endl;
         }
         if (proses_filter) {
-            filter_laporan(pilihan, bulan, tahun); 
+            filter_laporan(pilihan); 
         }
         system("pause");
     } while(pilihan != 4);
