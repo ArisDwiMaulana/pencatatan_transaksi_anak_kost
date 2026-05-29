@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 using namespace std;
 
 //================================== Config Region
@@ -77,27 +78,6 @@ string to_date_view(const int tanggal[]) {
     return res.empty() ? "-" : res;
 }
 
-string _generate_separator(const TableSchema &data){
-    string result = "+";
-    for (int i=0; i<data.total_column; i++){
-        result += string(data.space[i] + 2, '-') + "+";
-    }
-    return result;
-}
-
-string _center(const string& str, int width) {
-    if (str.length() >= width) return str;
-    int padding = width - str.length();
-    int left_pad = padding / 2;
-    int right_pad = padding - left_pad;
-    return string(left_pad, ' ') + str + string(right_pad, ' ');
-}
-
-string _left(const string& str, int width) {
-    if (str.length() >= width) return str;
-    return str + string(width - str.length(), ' ');
-}
-
 string to_record_value(int col_idx, int row_idx, const TableSchema &data, const string &option){
     if (option == "riwayat"){
         switch (col_idx) {
@@ -118,24 +98,52 @@ string to_record_value(int col_idx, int row_idx, const TableSchema &data, const 
     return "";
 }
 
-void to_table(const TableSchema &data, const string &option){
-    string sep = _generate_separator(data);
-    cout << sep << endl;
+void to_table_iomanip(const TableSchema &data, const string &option) {
+    // Print top separator
+    cout << "+";
+    for (int i = 0; i < data.total_column; i++) {
+        cout << setfill('-') << setw(data.space[i] + 2) << "" << "+";
+    }
+    cout << setfill(' ') << endl;
+
+    // Print headers
     cout << "|";
     for (int i = 0; i < data.total_column; i++) {
-        cout << " " << _center(data.metadata[i], data.space[i]) << " |";
+        cout << " ";
+        if (data.metadata[i].length() >= data.space[i]) {
+            cout << data.metadata[i];
+        } else {
+            int padding = data.space[i] - data.metadata[i].length();
+            int left_pad = padding / 2;
+            cout << setw(left_pad) << "" << setw(data.space[i] - left_pad) << left << data.metadata[i];
+        }
+        cout << " |";
     }
     cout << endl;
-    cout << sep << endl;
+
+    // Print middle separator
+    cout << "+";
+    for (int i = 0; i < data.total_column; i++) {
+        cout << setfill('-') << setw(data.space[i] + 2) << "" << "+";
+    }
+    cout << setfill(' ') << endl;
+
+    // Print rows
     for (int i = 0; i < data.total_row; i++) {
         cout << "|";
         for (int j = 0; j < data.total_column; j++) {
             string val = to_record_value(j, i, data, option);
-            cout << " " << _left(val, data.space[j]) << " |";
+            cout << " " << left << setw(data.space[j]) << val << " |";
         }
         cout << endl;
     }
-    cout << sep << endl;
+
+    // Print bottom separator
+    cout << "+";
+    for (int i = 0; i < data.total_column; i++) {
+        cout << setfill('-') << setw(data.space[i] + 2) << "" << "+";
+    }
+    cout << setfill(' ') << endl;
 }
 
 //================================== File Region
@@ -442,7 +450,7 @@ void filter_pilihan(int pilihan, bool sorted, int sort_type){
         sort_record(table_data, sort_type);
     }
     
-    to_table(table_data, "riwayat");
+    to_table_iomanip(table_data, "riwayat");
 }
 
 void sub_menu_1(){
@@ -554,7 +562,7 @@ void filter_search(int &h, int &b, int &t, int &n){
         }
     }
 
-    to_table(table_data, "riwayat");
+    to_table_iomanip(table_data, "riwayat");
 }
 
 void sub_menu_3(){
@@ -683,7 +691,7 @@ void filter_laporan(int pilihan){
         }
     }
 
-    to_table(table_data, "laporan");
+    to_table_iomanip(table_data, "laporan");
 }
 
 int list_sub_menu_4(){
