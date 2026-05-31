@@ -138,6 +138,69 @@ void to_table(const TableSchema &data, const string &option){
     cout << sep << endl;
 }
 
+bool isNumber(string input) {
+    for(int i = 0; i < input.length(); i++){
+        if(isdigit(input[i]) == 0){
+            return false;
+        }
+    }
+    return true;
+}
+
+int error_handling_input(int opsi){
+// opsi 1 untuk jenis, 2 untuk nominal, 3 untuk tanggal, 4 untuk bulan, 5 untuk tahun, 6 untuk id transaksi
+    string input;
+    int input_angka;
+    bool valid = false;
+
+    while (!valid) {
+        if (opsi == 1) {
+          cout<<"Masukkan Jenis Transaksi (1 untuk Pemasukan, 2 untuk Pengeluaran): ";
+        }else if(opsi == 2) {
+          cout<<"Masukkan Nominal: ";
+        }else if(opsi == 3) {
+          cout<<"Masukkan Tanggal (DD): ";
+        }else if(opsi == 4) {
+          cout<<"Masukkan Bulan (MM): ";
+        }else if(opsi == 5) {
+          cout<<"Masukkan Tahun (YYYY): ";
+        }else if(opsi == 6) {
+          cout<<"Masukkan ID Transaksi: ";
+        }
+
+        cin >> input;
+        if(isNumber(input)){
+            input_angka = stoi(input);
+            if ((opsi == 1 && (input_angka == 1 || input_angka == 2)) ||
+                (opsi == 2 && input_angka > 0) ||
+                (opsi == 3 && (input_angka >= 1 && input_angka <= 31)) ||
+                (opsi == 4 && (input_angka >= 1 && input_angka <= 12)) ||
+                (opsi == 5 && input_angka >= 1900) ||
+                (opsi == 6 && input_angka > 0)) {
+                valid = true;
+            }else{
+                cout << "Format tidak sesuai. Silakan coba lagi." << endl;
+            }
+        }else{
+            cout << "Input harus berupa angka. Silakan coba lagi." << endl;
+        }
+        
+    }
+
+    return input_angka;
+}
+
+void input_data(Transaksi &temp){
+    temp.jenis = error_handling_input(1);
+    cin.ignore();
+    cout<<"Masukkan Deskripsi: ";
+    getline(cin, temp.deskripsi);
+    temp.nominal = error_handling_input(2);
+    temp.tanggal[0] = error_handling_input(5);
+    temp.tanggal[1] = error_handling_input(4);
+    temp.tanggal[2] = error_handling_input(3);
+}
+
 //================================== File Region
 void load_data(Transaksi temp[], int *data_terisi){
     ifstream file("src/data.csv");
@@ -210,27 +273,7 @@ void catat_transaksi_baru(){
         }
         Transaksi temp;
         temp.id = total_transaksi + 1;
-        cout<<"Masukkan Jenis Transaksi (1 untuk Pemasukan, 2 untuk Pengeluaran): ";
-        cin>>temp.jenis;
-        cin.ignore();
-        cout<<"Masukkan Deskripsi: ";
-        getline(cin, temp.deskripsi);
-        cout<<"Masukkan Nominal: ";
-        cin>>temp.nominal;
-        for(int i=0; i<3; i++){
-            if(i == 0){
-                cout<<"Masukkan Tahun (YYYY): ";
-                cin>>temp.tanggal[i];
-            }
-            else if(i == 1){
-                cout<<"Masukkan Bulan (MM): ";
-                cin>>temp.tanggal[i];
-            }
-            else{
-                cout<<"Masukkan Tanggal (DD): ";
-                cin>>temp.tanggal[i];
-            }
-        }
+        input_data(temp);
         cin.ignore();
         file<<temp.id<<","<<temp.jenis<<","<<temp.deskripsi<<","<<temp.nominal<<","<<temp.tanggal[0]<<","<<temp.tanggal[1]<<","<<temp.tanggal[2]<<endl;
         file.close();
@@ -266,8 +309,7 @@ void edit_transaksi(){
     system("cls");
     cout<<"Mengedit Transaksi..."<<endl;
     int id_transaksi;
-    cout<<"Masukkan ID Transaksi yang ingin diedit: ";
-    cin>>id_transaksi;
+    id_transaksi = error_handling_input(6);
     bool found = cari_id_transaksi(id_transaksi); 
     if (!found) {
         cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
@@ -283,27 +325,7 @@ void edit_transaksi(){
         for(int i=0; i<data_terisi; i++){
             if(temp[i].id == id_transaksi){
                 cout<<"Transaksi ditemukan. Silakan masukkan data baru."<<endl;
-                cout<<"Masukkan Jenis Transaksi (1 untuk Pemasukan, 2 untuk Pengeluaran): ";
-                cin>>temp[i].jenis;
-                cin.ignore();
-                cout<<"Masukkan Deskripsi: ";
-                getline(cin, temp[i].deskripsi);
-                cout<<"Masukkan Nominal: ";
-                cin>>temp[i].nominal;
-                for(int j=0; j<3; j++){
-                    if(j == 0){
-                        cout<<"Masukkan Tahun (YYYY): ";
-                        cin>>temp[i].tanggal[j];
-                    }
-                    else if(j == 1){
-                        cout<<"Masukkan Bulan (MM): ";
-                        cin>>temp[i].tanggal[j];
-                    }
-                    else{
-                        cout<<"Masukkan Tanggal (DD): ";
-                        cin>>temp[i].tanggal[j];
-                    }
-                }
+                input_data(temp[i]);
             }
             file<<temp[i].id<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
         }
@@ -317,8 +339,7 @@ void hapus_transaksi(){
     system("cls");
     cout<<"Menghapus Transaksi..."<<endl;
     int id_transaksi;
-    cout<<"Masukkan ID Transaksi yang ingin dihapus: ";
-    cin>>id_transaksi;
+    id_transaksi = error_handling_input(6);
     bool found = cari_id_transaksi(id_transaksi);
     if (!found) {
         cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
