@@ -183,6 +183,7 @@ int error_handling_input(int opsi){
             }
         }else{
             cout << "Input harus berupa angka. Silakan coba lagi." << endl;
+            cin.ignore(1000000, '\n');
         }
         
     }
@@ -250,11 +251,14 @@ void id_terakhir(int *id_terakhir){
             barisTerakhir = baris; // Selalu perbarui dengan baris paling akhir
         }
     }
+    if(barisTerakhir.empty()) {
+        *id_terakhir = 0;
+    }else{
+        stringstream ss(barisTerakhir);
+        getline(ss, barisTerakhir, ',');
+        *id_terakhir = stoi(barisTerakhir);
+    }
     file.close();
-    stringstream ss(barisTerakhir);
-    getline(ss, barisTerakhir, ',');
-    *id_terakhir = stoi(barisTerakhir); 
-
 }
 
 void catat_transaksi_baru(){
@@ -312,7 +316,8 @@ void edit_transaksi(){
     id_transaksi = error_handling_input(6);
     bool found = cari_id_transaksi(id_transaksi); 
     if (!found) {
-        cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
+        cout<<"Transaksi tidak ditemukan atau data kosong"<<endl;
+        cin.ignore();
     }else{
         Transaksi temp[100];
         int data_terisi;
@@ -342,7 +347,8 @@ void hapus_transaksi(){
     id_transaksi = error_handling_input(6);
     bool found = cari_id_transaksi(id_transaksi);
     if (!found) {
-        cout<<"Transaksi tidak ditemukan atau tidak bisa membuka file!"<<endl;
+        cout<<"Transaksi tidak ditemukan atau data kosong"<<endl;
+        cin.ignore();
     } else {
         Transaksi temp[100];
         int data_terisi;
