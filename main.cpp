@@ -40,7 +40,7 @@ struct TableSchema{
     Laporan laporan_records[total_data];
 };
 
-//================================== Utils Region
+//================================== Utils & Shared Functions Region
 int check_menu(string pilihan){
     if (pilihan.empty() || pilihan.length() > 1){
         return -1;
@@ -97,6 +97,7 @@ string _left(const string& str, int width) {
     if (str.length() >= width) return str;
     return str + string(width - str.length(), ' ');
 }
+
 
 string to_record_value(int col_idx, int row_idx, const TableSchema &data, const string &option){
     if (option == "riwayat"){
@@ -202,6 +203,30 @@ void input_data(Transaksi &temp){
     temp.tanggal[2] = error_handling_input(3);
 }
 
+bool cari_id_transaksi(int id_transaksi){
+    ifstream file("src/data.csv");
+    if(file.fail()){
+        cout<<"Gagal membuka file!"<<endl;
+        return false;
+    }
+    string baris;
+    while (getline(file, baris)) {
+        if (!baris.empty()) {
+            stringstream ss(baris);
+            string id_str;
+            getline(ss, id_str, ',');
+            int id = stoi(id_str);
+            if (id == id_transaksi) {
+                file.close();
+                return true;
+            }
+        }
+    }
+    file.close();
+    return false;
+}   
+
+
 //================================== File Region
 void load_data(Transaksi temp[], int *data_terisi){
     ifstream file("src/data.csv");
@@ -238,141 +263,7 @@ void load_data(Transaksi temp[], int *data_terisi){
     file.close();
 }
 
-//================================== Menu 2 Region
-void id_terakhir(int *id_terakhir){
-    ifstream file("src/data.csv");
-    if(file.fail()){
-        cout<<"Gagal membuka file!"<<endl;
-        return;
-    }
-    string baris, barisTerakhir;
-    while (getline(file, baris)) {
-        if (!baris.empty()) {
-            barisTerakhir = baris; // Selalu perbarui dengan baris paling akhir
-        }
-    }
-    if(barisTerakhir.empty()) {
-        *id_terakhir = 0;
-    }else{
-        stringstream ss(barisTerakhir);
-        getline(ss, barisTerakhir, ',');
-        *id_terakhir = stoi(barisTerakhir);
-    }
-    file.close();
-}
-
-void catat_transaksi_baru(){
-    system("cls");
-    cout<<"Mencatat Transaksi Baru..."<<endl;
-    int total_transaksi = 0;
-    id_terakhir(&total_transaksi);
-    if(total_transaksi == 100){
-        cout<<"Jumlah transaksi sudah mencapai batas maksimum (100)."<<endl;
-        return;
-    }else{
-        ofstream file("src/data.csv", ios::app);
-        if(file.fail()){
-            cout<<"Gagal membuka file!"<<endl;
-            return;
-        }
-        Transaksi temp;
-        temp.id = total_transaksi + 1;
-        input_data(temp);
-        cin.ignore();
-        file<<temp.id<<","<<temp.jenis<<","<<temp.deskripsi<<","<<temp.nominal<<","<<temp.tanggal[0]<<","<<temp.tanggal[1]<<","<<temp.tanggal[2]<<endl;
-        file.close();
-    }
-    
-}
-
-//================================== Menu 5 Region
-bool cari_id_transaksi(int id_transaksi){
-    ifstream file("src/data.csv");
-    if(file.fail()){
-        cout<<"Gagal membuka file!"<<endl;
-        return false;
-    }
-    string baris;
-    while (getline(file, baris)) {
-        if (!baris.empty()) {
-            stringstream ss(baris);
-            string id_str;
-            getline(ss, id_str, ',');
-            int id = stoi(id_str);
-            if (id == id_transaksi) {
-                file.close();
-                return true;
-            }
-        }
-    }
-    file.close();
-    return false;
-}   
-
-void edit_transaksi(){
-    system("cls");
-    cout<<"Mengedit Transaksi..."<<endl;
-    int id_transaksi;
-    id_transaksi = error_handling_input(6);
-    bool found = cari_id_transaksi(id_transaksi); 
-    if (!found) {
-        cout<<"Transaksi tidak ditemukan atau data kosong"<<endl;
-        cin.ignore();
-    }else{
-        Transaksi temp[100];
-        int data_terisi;
-        load_data(temp, &data_terisi);
-        ofstream file("src/data.csv");
-        if(file.fail()){
-            cout<<"Gagal membuka file!"<<endl;
-            return;
-        }
-        for(int i=0; i<data_terisi; i++){
-            if(temp[i].id == id_transaksi){
-                cout<<"Transaksi ditemukan. Silakan masukkan data baru."<<endl;
-                input_data(temp[i]);
-            }
-            file<<temp[i].id<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
-        }
-        cin.ignore();
-        file.close();
-    }
-}
-
-//================================== Menu 6 Region
-void hapus_transaksi(){
-    system("cls");
-    cout<<"Menghapus Transaksi..."<<endl;
-    int id_transaksi;
-    id_transaksi = error_handling_input(6);
-    bool found = cari_id_transaksi(id_transaksi);
-    if (!found) {
-        cout<<"Transaksi tidak ditemukan atau data kosong"<<endl;
-        cin.ignore();
-    } else {
-        Transaksi temp[100];
-        int data_terisi;
-        load_data(temp, &data_terisi);
-        ofstream file("src/data.csv");
-        if(file.fail()){
-            cout<<"Gagal membuka file!"<<endl;
-            return;
-        }
-        int jumlah_dihapus = 0;
-        for(int i=0; i<data_terisi; i++){
-            if(temp[i].id != id_transaksi){
-                file<<temp[i].id - jumlah_dihapus<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
-            }else{
-                jumlah_dihapus++;
-            }
-        }
-        cout<<"Data berhasil dihapus"<<endl;
-        cin.ignore();
-        file.close();
-    }
-}
-
-//================================== Sub Menu 1 Region
+//================================== Menu 1 Region (Tampilkan Riwayat)
 int list_sub_menu_1(){
     string pilihan;
 
@@ -513,7 +404,54 @@ void sub_menu_1(){
     }while(pilihan != 4);
 }
 
-//================================== Sub Menu 3 Region
+//================================== Menu 2 Region (Catat Transaksi Baru)
+void id_terakhir(int *id_terakhir){
+    ifstream file("src/data.csv");
+    if(file.fail()){
+        cout<<"Gagal membuka file!"<<endl;
+        return;
+    }
+    string baris, barisTerakhir;
+    while (getline(file, baris)) {
+        if (!baris.empty()) {
+            barisTerakhir = baris; // Selalu perbarui dengan baris paling akhir
+        }
+    }
+    if(barisTerakhir.empty()) {
+        *id_terakhir = 0;
+    }else{
+        stringstream ss(barisTerakhir);
+        getline(ss, barisTerakhir, ',');
+        *id_terakhir = stoi(barisTerakhir);
+    }
+    file.close();
+}
+
+void catat_transaksi_baru(){
+    system("cls");
+    cout<<"Mencatat Transaksi Baru..."<<endl;
+    int total_transaksi = 0;
+    id_terakhir(&total_transaksi);
+    if(total_transaksi == 100){
+        cout<<"Jumlah transaksi sudah mencapai batas maksimum (100)."<<endl;
+        return;
+    }else{
+        ofstream file("src/data.csv", ios::app);
+        if(file.fail()){
+            cout<<"Gagal membuka file!"<<endl;
+            return;
+        }
+        Transaksi temp;
+        temp.id = total_transaksi + 1;
+        input_data(temp);
+        cin.ignore();
+        file<<temp.id<<","<<temp.jenis<<","<<temp.deskripsi<<","<<temp.nominal<<","<<temp.tanggal[0]<<","<<temp.tanggal[1]<<","<<temp.tanggal[2]<<endl;
+        file.close();
+    }
+    
+}
+
+//================================== Menu 3 Region (Cari Transaksi)
 int input_search(string massage){
     string request;
 
@@ -637,9 +575,7 @@ void sub_menu_3(){
     } while(pilihan != 5);
 }
 
-//================================== Sub Menu 4 Region
-
-
+//================================== Menu 4 Region (Laporan Keuangan)
 void filter_laporan(int pilihan){
     int total_temp = 0;
     Transaksi temp[total_data]; 
@@ -762,6 +698,70 @@ void sub_menu_4(){
         }
         system("pause");
     } while(pilihan != 4);
+}
+
+//================================== Menu 5 Region (Edit Transaksi)
+void edit_transaksi(){
+    system("cls");
+    cout<<"Mengedit Transaksi..."<<endl;
+    int id_transaksi;
+    id_transaksi = error_handling_input(6);
+    bool found = cari_id_transaksi(id_transaksi); 
+    if (!found) {
+        cout<<"Transaksi tidak ditemukan atau data kosong"<<endl;
+        cin.ignore();
+    }else{
+        Transaksi temp[100];
+        int data_terisi;
+        load_data(temp, &data_terisi);
+        ofstream file("src/data.csv");
+        if(file.fail()){
+            cout<<"Gagal membuka file!"<<endl;
+            return;
+        }
+        for(int i=0; i<data_terisi; i++){
+            if(temp[i].id == id_transaksi){
+                cout<<"Transaksi ditemukan. Silakan masukkan data baru."<<endl;
+                input_data(temp[i]);
+            }
+            file<<temp[i].id<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
+        }
+        cin.ignore();
+        file.close();
+    }
+}
+
+//================================== Menu 6 Region (Hapus Transaksi)
+void hapus_transaksi(){
+    system("cls");
+    cout<<"Menghapus Transaksi..."<<endl;
+    int id_transaksi;
+    id_transaksi = error_handling_input(6);
+    bool found = cari_id_transaksi(id_transaksi);
+    if (!found) {
+        cout<<"Transaksi tidak ditemukan atau data kosong"<<endl;
+        cin.ignore();
+    } else {
+        Transaksi temp[100];
+        int data_terisi;
+        load_data(temp, &data_terisi);
+        ofstream file("src/data.csv");
+        if(file.fail()){
+            cout<<"Gagal membuka file!"<<endl;
+            return;
+        }
+        int jumlah_dihapus = 0;
+        for(int i=0; i<data_terisi; i++){
+            if(temp[i].id != id_transaksi){
+                file<<temp[i].id - jumlah_dihapus<<","<<temp[i].jenis<<","<<temp[i].deskripsi<<","<<temp[i].nominal<<","<<temp[i].tanggal[0]<<","<<temp[i].tanggal[1]<<","<<temp[i].tanggal[2]<<endl;
+            }else{
+                jumlah_dihapus++;
+            }
+        }
+        cout<<"Data berhasil dihapus"<<endl;
+        cin.ignore();
+        file.close();
+    }
 }
 
 //================================== main Region
