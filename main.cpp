@@ -98,7 +98,6 @@ string _left(const string& str, int width) {
     return str + string(width - str.length(), ' ');
 }
 
-
 string to_record_value(int col_idx, int row_idx, const TableSchema &data, const string &option){
     if (option == "riwayat"){
         switch (col_idx) {
@@ -226,7 +225,6 @@ bool cari_id_transaksi(int id_transaksi){
     return false;
 }   
 
-
 //================================== File Region
 void load_data(Transaksi temp[], int *data_terisi){
     ifstream file("src/data.csv");
@@ -336,7 +334,7 @@ void sort_record(TableSchema &data, int sort_type){
     }
 }
 
-void filter_pilihan(int pilihan, bool sorted, int sort_type){
+void filter_riwayat(int pilihan, bool sorted, int sort_type){
     int total_temp = 0;
 
     Transaksi temp[total_data]; 
@@ -384,15 +382,15 @@ void sub_menu_1(){
         system("cls");
         switch(pilihan){
             case 1:
-                filter_pilihan(0, sorted, sort_type);
+                filter_riwayat(0, sorted, sort_type);
                 break;
             case 2:
                 cout<<"Menampilkan Pemasukan..."<<endl;
-                filter_pilihan(1, sorted, sort_type);
+                filter_riwayat(1, sorted, sort_type);
                 break;
             case 3:
                 cout<<"Menampilkan Pengeluaran..."<<endl;
-                filter_pilihan(2, sorted, sort_type);
+                filter_riwayat(2, sorted, sort_type);
                 break;
             case 4:
                 cout<<"Kembali ke Menu Utama..."<<endl;
@@ -482,7 +480,7 @@ int list_sub_menu_3(){
     return check_menu(pilihan);
 }
 
-void filter_search(int &h, int &b, int &t, int &n){
+void filter_transaksi(int &h, int &b, int &t, int &n){
     int total_temp = 0;
     Transaksi temp[total_data];
     load_data(temp, &total_temp);
@@ -569,7 +567,7 @@ void sub_menu_3(){
         }
 
         if (proses_filter) {
-            filter_search(hari, bulan, tahun, nominal); 
+            filter_transaksi(hari, bulan, tahun, nominal); 
         }
         system("pause");
     } while(pilihan != 5);
